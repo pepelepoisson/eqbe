@@ -1,5 +1,6 @@
 #include "painlessMesh.h"
 #include "FastLED.h"
+#include<Wire.h>
 FASTLED_USING_NAMESPACE
 
 // Configuration
@@ -49,6 +50,12 @@ uint8_t gHue = 0;
 void (*gActivePattern)();
 void (*gSelectedPattern)();
 bool gIsOurSentPattern = true;
+
+// Variables used in CheckAccel() routine
+uint8_t MPU_addr=0x68;
+int16_t AcX,AcY,AcZ,Tmp,GyX,GyY,GyZ; //These will be the raw data from the MPU6050.;
+#define ACCELEROMETER_ORIENTATION 4     // 0, 1, 2, 3 or 4 to set the orientation of the accerometer module
+int a_forward=0,a_sideway=0,a_vertical=0;
 
 void solid()
 {
@@ -369,4 +376,30 @@ void loop() {
   }
 }
 
+void CheckAccel(){
+  // Reads acceleration from MPU6050 to evaluate current condition.
+  // Tunables:
+  // Output values: still, cruising, braking, fallen, unknown
+
+  // Get accelerometer readings
+  Wire.beginTransmission(MPU_addr);
+  Wire.write(0x3B);  // starting with register 0x3B (ACCEL_XOUT_H)
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU_addr,(size_t)14,true);  // request a total of 14 registers
+  AcX=Wire.read()<<8|Wire.read();  // 0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)
+  AcY=Wire.read()<<8|Wire.read();  // 0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
+  AcZ=Wire.read()<<8|Wire.read();  // 0x3F (ACCEL_ZOUT_H) & 0x40 (ACCEL_ZOUT_L)
+  Tmp=Wire.read()<<8|Wire.read();  // 0x41 (TEMP_OUT_H) & 0x42 (TEMP_OUT_L)
+  GyX=Wire.read()<<8|Wire.read();  // 0x43 (GYRO_XOUT_H) & 0x44 (GYRO_XOUT_L)
+  GyY=Wire.read()<<8|Wire.read();  // 0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
+  GyZ=Wire.read()<<8|Wire.read();  // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
+
+  // Convert to expected orientation - includes unit conversion to "cents of g" for MPU range set to 2g
+  a_forward = (ACCELEROMETER_ORIENTATION == 0?-AcX:(ACCELEROMETER_ORIENTATION == 1?-AcX:(ACCELEROMETER_ORIENTATION == 2?-AcX:(ACCELEROMETER_ORIENTATION == 3?-AcY:AcY))))/164.0;
+  a_sideway = (ACCELEROMETER_ORIENTATION == 0?AcY:(ACCELEROMETER_ORIENTATION == 1?AcZ:(ACCELEROMETER_ORIENTATION == 2?-AcZ:(ACCELEROMETER_ORIENTATION == 3?AcZ:-AcZ))))/164.0;
+  a_vertical = (ACCELEROMETER_ORIENTATION == 0?AcZ:(ACCELEROMETER_ORIENTATION == 1?-AcY:(ACCELEROMETER_ORIENTATION == 2?AcY:(ACCELEROMETER_ORIENTATION == 3?AcX:AcX))))/164.0;
+
+  Serial.print("AcX: "); Serial.print(AcX);Serial.print(" AcY: "); Serial.print(AcY);Serial.print(" AcZ: "); Serial.print(AcZ);
+  Serial.print("a_forward:");Serial.print(a_forward);Serial.print(" a_sideway:");Serial.print(a_sideway);Serial.print(" a_vertical:");Serial.println(a_vertical);
+}
 

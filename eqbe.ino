@@ -146,7 +146,7 @@ int8_t nodeId2riderIdx(uint32_t nodeId) {
   switch (nodeId) {
     case 0xa6182c9a:
       return SEBASTIEN;
-    case 0x7f0fc58c: // Witty board
+    case 0x7f0fb8c3:
       return PASCAL;
     default:
       return UNKNOWN_RIDER;

@@ -364,6 +364,10 @@ void loop() {
 
   updatePattern();
 
+  EVERY_N_MILLISECONDS( 2000 ) {
+    CheckAccel();
+  }
+
   EVERY_N_MILLISECONDS( 15 ) {
     if (gPatternState == NORMAL) {
       gHue += 1;  // slowly cycle the "base color" through the rainbow

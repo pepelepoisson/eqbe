@@ -329,7 +329,20 @@ void setup() {
   FastLED.setBrightness(BRIGHTNESS);
   fill_solid(leds, NUM_LEDS, CHSV(HUE_GREEN, 255, 100));
   FastLED.show();
+  
+// Set up MPU 6050:
+  Wire.begin();
+  #if ARDUINO >= 157
+    Wire.setClock(400000UL); // Set I2C frequency to 400kHz
+  #else
+    TWBR = ((F_CPU / 400000UL) - 16) / 2; // Set I2C frequency to 400kHz
+  #endif
 
+  Wire.beginTransmission(MPU_addr);
+  Wire.write(0x6B);  // PWR_MGMT_1 register
+  Wire.write(0);     // set to zero (wakes up the MPU-6050)
+  Wire.endTransmission(true);
+  
   wasPressed = false;
   pinMode(PUSH_BUTTON_PIN, INPUT_PULLUP);
 
@@ -364,7 +377,7 @@ void loop() {
 
   updatePattern();
 
-  EVERY_N_MILLISECONDS( 2000 ) {
+  EVERY_N_MILLISECONDS( 500 ) {
     CheckAccel();
   }
 
@@ -403,7 +416,8 @@ void CheckAccel(){
   a_sideway = (ACCELEROMETER_ORIENTATION == 0?AcY:(ACCELEROMETER_ORIENTATION == 1?AcZ:(ACCELEROMETER_ORIENTATION == 2?-AcZ:(ACCELEROMETER_ORIENTATION == 3?AcZ:-AcZ))))/164.0;
   a_vertical = (ACCELEROMETER_ORIENTATION == 0?AcZ:(ACCELEROMETER_ORIENTATION == 1?-AcY:(ACCELEROMETER_ORIENTATION == 2?AcY:(ACCELEROMETER_ORIENTATION == 3?AcX:AcX))))/164.0;
 
-  Serial.print("AcX: "); Serial.print(AcX);Serial.print(" AcY: "); Serial.print(AcY);Serial.print(" AcZ: "); Serial.print(AcZ);
-  Serial.print("a_forward:");Serial.print(a_forward);Serial.print(" a_sideway:");Serial.print(a_sideway);Serial.print(" a_vertical:");Serial.println(a_vertical);
+  Serial.printf("f:%d s:%d v:%d\n", a_forward,a_sideway,a_vertical);
+
+  
 }
 

@@ -116,7 +116,7 @@ void juggle() {
 }
 
 void letter() {
-  drawLetter('D');
+  drawLetter('F');
 }
 
 void transitionPulse() {

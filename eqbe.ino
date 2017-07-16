@@ -56,6 +56,9 @@ uint8_t MPU_addr=0x68;
 int16_t AcX,AcY,AcZ,Tmp,GyX,GyY,GyZ; //These will be the raw data from the MPU6050.;
 #define ACCELEROMETER_ORIENTATION 4     // 0, 1, 2, 3 or 4 to set the orientation of the accerometer module
 int a_forward=0,a_sideway=0,a_vertical=0;
+enum FACES { FACE_NONE, FACE_1, FACE_2, FACE_3, FACE_4, FACE_5, FACE_6, FACES_COUNT };
+const char *faceName[FACES_COUNT] = { "None", "Face 1", "Face 2", "Face 3", "Face 4", "Face 5 (LEDs up)", "Face 6 (LEDs down)" };
+uint8_t orientation = FACE_NONE;
 
 void solid()
 {
@@ -418,6 +421,33 @@ void CheckAccel(){
 
   Serial.printf("f:%d s:%d v:%d\n", a_forward,a_sideway,a_vertical);
 
-  
+  // Detect cube orientation - Current test works with ACCELEROMETER_ORIENTATION = 4
+  orientation=FACE_NONE;
+  if (a_vertical >= 80 && abs(a_forward) <= 25 && abs(a_sideway) <= 25) {
+    // coté 1 en haut
+    orientation = FACE_1;
+  }
+  if (a_forward >= 80 && abs(a_vertical) <= 25 && abs(a_sideway) <= 25) {
+    // coté 2 en haut
+    orientation = FACE_2;
+  }
+  if (a_vertical <= -80 && abs(a_forward) <= 25 && abs(a_sideway) <= 25) {
+    // coté 3 en haut
+    orientation = FACE_3;
+  }
+  if (a_forward <= -80 && abs(a_vertical) <= 25 && abs(a_sideway) <= 25) {
+    // coté 4 en haut
+    orientation = FACE_4;
+  }
+  if (a_sideway >= 80 && abs(a_vertical) <= 25 && abs(a_forward) <= 25) {
+    // coté LEDs en haut
+    orientation = FACE_5;
+  }
+  if (a_sideway <= -80 && abs(a_vertical) <= 25 && abs(a_forward) <= 25) {
+    // coté batteries en haut
+    orientation = FACE_6;
+  }
+
+  Serial.printf("Orientation: %s\n", faceName[orientation]);
 }
 

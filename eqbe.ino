@@ -1,12 +1,18 @@
+// Arduino Built-in Library
+#include<Wire.h>
+
+// External Library
 #include "painlessMesh.h"
 #include "FastLED.h"
-#include<Wire.h>
 FASTLED_USING_NAMESPACE
+
+// Project Library
+#include "font-5x5.h"
 
 // Configuration
 
-#define BRIGHTNESS          50
-#define FRAMES_PER_SECOND  125 // 125 frames/sec <=> 8 milli/frame
+#define BRIGHTNESS          30
+#define FRAMES_PER_SECOND   60 // 125 frames/sec <=> 8 milli/frame
 
 #define NUM_LEDS  25
 
@@ -37,8 +43,8 @@ FASTLED_USING_NAMESPACE
 enum patternStateEnum { NORMAL, TRANSITION, NEW_CONNECTION, CHANGED_CONNECTIONS, PATTERN_STATE_COUNT };
 uint8_t gPatternState = NORMAL;
 
-enum patternEnum { SOLID, RAINBOW, CONFETTI, SINELON, BPM, JUGGLE, PATTERN_COUNT };
-const char *patternName[PATTERN_COUNT] = { "solid", "rainbow", "confetti", "sinelon", "bpm", "juggle" };
+enum patternEnum { SOLID, RAINBOW, CONFETTI, SINELON, BPM, JUGGLE, LETTER, PATTERN_COUNT };
+const char *patternName[PATTERN_COUNT] = { "solid", "rainbow", "confetti", "sinelon", "bpm", "juggle", "letter" };
 
 enum riderEnum { SEBASTIEN, PASCAL, UNKNOWN_RIDER, RIDER_COUNT };
 const char *rider[RIDER_COUNT] = { "Sebastien", "Pascal", "Unknown" };
@@ -52,8 +58,8 @@ void (*gSelectedPattern)();
 bool gIsOurSentPattern = true;
 
 // Variables used in CheckAccel() routine
-uint8_t MPU_addr=0x68;
-int16_t AcX,AcY,AcZ,Tmp,GyX,GyY,GyZ; //These will be the raw data from the MPU6050.;
+uint8_t MPU_addr = 0x68;
+int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ; //These will be the raw data from the MPU6050.;
 #define ACCELEROMETER_ORIENTATION 4     // 0, 1, 2, 3 or 4 to set the orientation of the accerometer module
 int a_forward=0,a_sideway=0,a_vertical=0;
 enum FACES { FACE_NONE, FACE_1, FACE_2, FACE_3, FACE_4, FACE_5, FACE_6, FACES_COUNT };
@@ -107,6 +113,10 @@ void juggle() {
     leds[beatsin16(i + 7, 0, NUM_LEDS)] |= CHSV(dothue, 200, 255);
     dothue += 32;
   }
+}
+
+void letter() {
+  drawLetter('D');
 }
 
 void transitionPulse() {
@@ -183,6 +193,9 @@ void setSelectedPattern(uint8_t patternIdx) {
     case JUGGLE:
       gSelectedPattern = juggle;
       break;
+    case LETTER:
+      gSelectedPattern = letter;
+      break;
     default:
       Serial.printf("ERROR! Unknown Pattern index, %d\n", patternIdx);
   }
@@ -192,7 +205,7 @@ Task taskSendMessage( TASK_SECOND * 1 , TASK_FOREVER, []() {
   DynamicJsonBuffer jsonBuffer;
   JsonObject& msg = jsonBuffer.createObject();
 
-  uint8_t patternIdx = random(0, PATTERN_COUNT);
+  uint8_t patternIdx = LETTER; // random(0, PATTERN_COUNT);
   setSelectedPattern(patternIdx);
   msg["pattern"] = patternIdx;
   Serial.printf("  Setting my pattern to %s (index: %d)\n", patternName[patternIdx], patternIdx);
@@ -248,7 +261,7 @@ void receivedCallback( uint32_t from, String &msg ) {
 void newConnectionCallback(uint32_t nodeId) {
   Serial.printf("New Connection\n");
   Serial.printf("  Remote module ==> NodeId: 0x%08x, Rider: %s\n", nodeId, rider[nodeId2riderIdx(nodeId)]);
-  
+
   gFrameCount = 0;
   gPatternState = NEW_CONNECTION;
 }
@@ -400,7 +413,6 @@ void CheckAccel(){
   // Reads acceleration from MPU6050 to evaluate current condition.
   // Tunables:
   // Output values: still, cruising, braking, fallen, unknown
-
   // Get accelerometer readings
   Wire.beginTransmission(MPU_addr);
   Wire.write(0x3B);  // starting with register 0x3B (ACCEL_XOUT_H)
@@ -451,3 +463,14 @@ void CheckAccel(){
   Serial.printf("Orientation: %s\n", faceName[orientation]);
 }
 
+void drawLetter(char c) {
+  uint8_t idx = c - 'A';
+  uint32_t letterA = font_5x5[idx];
+  uint32_t singleBit = 1;
+
+  // FIXME: Use font size instead of magic 5*5
+  for ( uint8_t i = 0; i < 25; i++) {
+    leds[i] = CHSV(gHue, 255, letterA & singleBit ? 255 : 0);
+    singleBit <<= 1;
+  }
+}

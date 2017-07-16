@@ -10,6 +10,7 @@ const uint32_t font_5x5[] = {
   0x00F8C62F, // D
   0x01F83E1F, // E
   0x00183E1F, // F
+  0x07E1F61F, // G
 };
 
 #endif

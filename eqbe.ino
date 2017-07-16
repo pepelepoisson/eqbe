@@ -116,7 +116,8 @@ void juggle() {
 }
 
 void letter() {
-  drawLetter('G');
+  // FIXME: Buggy, 
+  drawLetter('A' + gHue / (255 / 7)); // A to G, 7 letters
 }
 
 void transitionPulse() {
@@ -205,7 +206,7 @@ Task taskSendMessage( TASK_SECOND * 1 , TASK_FOREVER, []() {
   DynamicJsonBuffer jsonBuffer;
   JsonObject& msg = jsonBuffer.createObject();
 
-  uint8_t patternIdx = LETTER; // random(0, PATTERN_COUNT);
+  uint8_t patternIdx = random(0, PATTERN_COUNT);
   setSelectedPattern(patternIdx);
   msg["pattern"] = patternIdx;
   Serial.printf("  Setting my pattern to %s (index: %d)\n", patternName[patternIdx], patternIdx);

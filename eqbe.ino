@@ -45,6 +45,8 @@ uint8_t gPatternState = NORMAL;
 
 enum patternEnum { SOLID, RAINBOW, CONFETTI, SINELON, BPM, JUGGLE, LETTER, PATTERN_COUNT };
 const char *patternName[PATTERN_COUNT] = { "solid", "rainbow", "confetti", "sinelon", "bpm", "juggle", "letter" };
+uint8_t gNextPatternIdx = PATTERN_COUNT;
+
 
 enum riderEnum { SEBASTIEN, PASCAL, UNKNOWN_RIDER, RIDER_COUNT };
 const char *rider[RIDER_COUNT] = { "Sebastien", "Pascal", "Unknown" };
@@ -61,7 +63,7 @@ bool gIsOurSentPattern = true;
 uint8_t MPU_addr = 0x68;
 int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ; //These will be the raw data from the MPU6050.;
 #define ACCELEROMETER_ORIENTATION 4     // 0, 1, 2, 3 or 4 to set the orientation of the accerometer module
-int a_forward=0,a_sideway=0,a_vertical=0;
+int a_forward = 0, a_sideway = 0, a_vertical = 0;
 enum FACES { FACE_NONE, FACE_1, FACE_2, FACE_3, FACE_4, FACE_5, FACE_6, FACES_COUNT };
 const char *faceName[FACES_COUNT] = { "None", "Face 1", "Face 2", "Face 3", "Face 4", "Face 5 (LEDs up)", "Face 6 (LEDs down)" };
 uint8_t orientation = FACE_NONE;
@@ -116,7 +118,7 @@ void juggle() {
 }
 
 void letter() {
-  // FIXME: Buggy, 
+  // FIXME: Buggy,
   drawLetter('A' + gHue / (255 / 7)); // A to G, 7 letters
 }
 
@@ -206,7 +208,8 @@ Task taskSendMessage( TASK_SECOND * 1 , TASK_FOREVER, []() {
   DynamicJsonBuffer jsonBuffer;
   JsonObject& msg = jsonBuffer.createObject();
 
-  uint8_t patternIdx = random(0, PATTERN_COUNT);
+  uint8_t patternIdx = gNextPatternIdx < PATTERN_COUNT ? gNextPatternIdx : random(0, PATTERN_COUNT);
+
   setSelectedPattern(patternIdx);
   msg["pattern"] = patternIdx;
   Serial.printf("  Setting my pattern to %s (index: %d)\n", patternName[patternIdx], patternIdx);
@@ -346,20 +349,20 @@ void setup() {
   FastLED.setBrightness(BRIGHTNESS);
   fill_solid(leds, NUM_LEDS, CHSV(HUE_GREEN, 255, 100));
   FastLED.show();
-  
-// Set up MPU 6050:
+
+  // Set up MPU 6050:
   Wire.begin();
-  #if ARDUINO >= 157
-    Wire.setClock(400000UL); // Set I2C frequency to 400kHz
-  #else
-    TWBR = ((F_CPU / 400000UL) - 16) / 2; // Set I2C frequency to 400kHz
-  #endif
+#if ARDUINO >= 157
+  Wire.setClock(400000UL); // Set I2C frequency to 400kHz
+#else
+  TWBR = ((F_CPU / 400000UL) - 16) / 2; // Set I2C frequency to 400kHz
+#endif
 
   Wire.beginTransmission(MPU_addr);
   Wire.write(0x6B);  // PWR_MGMT_1 register
   Wire.write(0);     // set to zero (wakes up the MPU-6050)
   Wire.endTransmission(true);
-  
+
   wasPressed = false;
   pinMode(PUSH_BUTTON_PIN, INPUT_PULLUP);
 
@@ -410,7 +413,7 @@ void loop() {
   }
 }
 
-void CheckAccel(){
+void CheckAccel() {
   // Reads acceleration from MPU6050 to evaluate current condition.
   // Tunables:
   // Output values: still, cruising, braking, fallen, unknown
@@ -418,50 +421,72 @@ void CheckAccel(){
   Wire.beginTransmission(MPU_addr);
   Wire.write(0x3B);  // starting with register 0x3B (ACCEL_XOUT_H)
   Wire.endTransmission(false);
-  Wire.requestFrom(MPU_addr,(size_t)14,true);  // request a total of 14 registers
-  AcX=Wire.read()<<8|Wire.read();  // 0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)
-  AcY=Wire.read()<<8|Wire.read();  // 0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
-  AcZ=Wire.read()<<8|Wire.read();  // 0x3F (ACCEL_ZOUT_H) & 0x40 (ACCEL_ZOUT_L)
-  Tmp=Wire.read()<<8|Wire.read();  // 0x41 (TEMP_OUT_H) & 0x42 (TEMP_OUT_L)
-  GyX=Wire.read()<<8|Wire.read();  // 0x43 (GYRO_XOUT_H) & 0x44 (GYRO_XOUT_L)
-  GyY=Wire.read()<<8|Wire.read();  // 0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
-  GyZ=Wire.read()<<8|Wire.read();  // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
+  Wire.requestFrom(MPU_addr, (size_t)14, true); // request a total of 14 registers
+  AcX = Wire.read() << 8 | Wire.read(); // 0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)
+  AcY = Wire.read() << 8 | Wire.read(); // 0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
+  AcZ = Wire.read() << 8 | Wire.read(); // 0x3F (ACCEL_ZOUT_H) & 0x40 (ACCEL_ZOUT_L)
+  Tmp = Wire.read() << 8 | Wire.read(); // 0x41 (TEMP_OUT_H) & 0x42 (TEMP_OUT_L)
+  GyX = Wire.read() << 8 | Wire.read(); // 0x43 (GYRO_XOUT_H) & 0x44 (GYRO_XOUT_L)
+  GyY = Wire.read() << 8 | Wire.read(); // 0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
+  GyZ = Wire.read() << 8 | Wire.read(); // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
 
   // Convert to expected orientation - includes unit conversion to "cents of g" for MPU range set to 2g
-  a_forward = (ACCELEROMETER_ORIENTATION == 0?-AcX:(ACCELEROMETER_ORIENTATION == 1?-AcX:(ACCELEROMETER_ORIENTATION == 2?-AcX:(ACCELEROMETER_ORIENTATION == 3?-AcY:AcY))))/164.0;
-  a_sideway = (ACCELEROMETER_ORIENTATION == 0?AcY:(ACCELEROMETER_ORIENTATION == 1?AcZ:(ACCELEROMETER_ORIENTATION == 2?-AcZ:(ACCELEROMETER_ORIENTATION == 3?AcZ:-AcZ))))/164.0;
-  a_vertical = (ACCELEROMETER_ORIENTATION == 0?AcZ:(ACCELEROMETER_ORIENTATION == 1?-AcY:(ACCELEROMETER_ORIENTATION == 2?AcY:(ACCELEROMETER_ORIENTATION == 3?AcX:AcX))))/164.0;
+  a_forward = (ACCELEROMETER_ORIENTATION == 0 ? -AcX : (ACCELEROMETER_ORIENTATION == 1 ? -AcX : (ACCELEROMETER_ORIENTATION == 2 ? -AcX : (ACCELEROMETER_ORIENTATION == 3 ? -AcY : AcY)))) / 164.0;
+  a_sideway = (ACCELEROMETER_ORIENTATION == 0 ? AcY : (ACCELEROMETER_ORIENTATION == 1 ? AcZ : (ACCELEROMETER_ORIENTATION == 2 ? -AcZ : (ACCELEROMETER_ORIENTATION == 3 ? AcZ : -AcZ)))) / 164.0;
+  a_vertical = (ACCELEROMETER_ORIENTATION == 0 ? AcZ : (ACCELEROMETER_ORIENTATION == 1 ? -AcY : (ACCELEROMETER_ORIENTATION == 2 ? AcY : (ACCELEROMETER_ORIENTATION == 3 ? AcX : AcX)))) / 164.0;
 
-  Serial.printf("f:%d s:%d v:%d\n", a_forward,a_sideway,a_vertical);
+  //Serial.printf("f:%d s:%d v:%d\n", a_forward,a_sideway,a_vertical);
 
   // Detect cube orientation - Current test works with ACCELEROMETER_ORIENTATION = 4
-  orientation=FACE_NONE;
-  if (a_vertical >= 80 && abs(a_forward) <= 25 && abs(a_sideway) <= 25) {
+
+  // On change exec some code
+
+  if (a_vertical >= 80 && abs(a_forward) <= 25 && abs(a_sideway) <= 25 && orientation != FACE_1) {
+    Serial.print(orientation);
     // coté 1 en haut
     orientation = FACE_1;
-  }
-  if (a_forward >= 80 && abs(a_vertical) <= 25 && abs(a_sideway) <= 25) {
+
+    gNextPatternIdx = LETTER;
+    taskSendMessage.forceNextIteration();
+  } else if (a_forward >= 80 && abs(a_vertical) <= 25 && abs(a_sideway) <= 25 && orientation != FACE_2) {
     // coté 2 en haut
     orientation = FACE_2;
-  }
-  if (a_vertical <= -80 && abs(a_forward) <= 25 && abs(a_sideway) <= 25) {
+
+    gNextPatternIdx = PATTERN_COUNT;
+    taskSendMessage.forceNextIteration();
+  } else if (a_vertical <= -80 && abs(a_forward) <= 25 && abs(a_sideway) <= 25 && orientation != FACE_3) {
     // coté 3 en haut
     orientation = FACE_3;
-  }
-  if (a_forward <= -80 && abs(a_vertical) <= 25 && abs(a_sideway) <= 25) {
+
+    gNextPatternIdx = PATTERN_COUNT;
+    taskSendMessage.forceNextIteration();
+  } else if (a_forward <= -80 && abs(a_vertical) <= 25 && abs(a_sideway) <= 25 && orientation != FACE_4) {
     // coté 4 en haut
     orientation = FACE_4;
-  }
-  if (a_sideway >= 80 && abs(a_vertical) <= 25 && abs(a_forward) <= 25) {
+
+    gNextPatternIdx = PATTERN_COUNT;
+    taskSendMessage.forceNextIteration();
+  } else if (a_sideway >= 80 && abs(a_vertical) <= 25 && abs(a_forward) <= 25 && orientation != FACE_5) {
     // coté LEDs en haut
     orientation = FACE_5;
-  }
-  if (a_sideway <= -80 && abs(a_vertical) <= 25 && abs(a_forward) <= 25) {
+
+    gNextPatternIdx = PATTERN_COUNT;
+    taskSendMessage.forceNextIteration();
+  } else if (a_sideway <= -80 && abs(a_vertical) <= 25 && abs(a_forward) <= 25 && orientation != FACE_6) {
     // coté batteries en haut
     orientation = FACE_6;
+
+    gNextPatternIdx = PATTERN_COUNT;
+    taskSendMessage.forceNextIteration();
+  }  else {
+    // orientation = FACE_NONE;
+
+    // gNextPatternIdx = PATTERN_COUNT;
+    // taskSendMessage.forceNextIteration();
+
   }
 
-  Serial.printf("Orientation: %s\n", faceName[orientation]);
+  //Serial.printf("Orientation: %s\n", faceName[orientation]);
 }
 
 void drawLetter(char c) {

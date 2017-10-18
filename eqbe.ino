@@ -3,6 +3,7 @@
 
 // External Library
 #include "painlessMesh.h"
+#define FASTLED_ALLOW_INTERRUPTS 0  // To fix flickering issue https://github.com/FastLED/FastLED/issues/306
 #include "FastLED.h"
 FASTLED_USING_NAMESPACE
 
@@ -14,7 +15,8 @@ FASTLED_USING_NAMESPACE
 #define BRIGHTNESS          30
 #define FRAMES_PER_SECOND   60 // 125 frames/sec <=> 8 milli/frame
 
-#define NUM_LEDS  25
+//#define NUM_LEDS  25
+#define NUM_LEDS  64
 
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB

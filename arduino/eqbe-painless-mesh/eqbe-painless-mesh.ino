@@ -15,8 +15,9 @@ FASTLED_USING_NAMESPACE
 #define BRIGHTNESS          60
 #define FRAMES_PER_SECOND   125 // 125 frames/sec <=> 8 milli/frame
 
-//#define NUM_LEDS  25
-#define NUM_LEDS  64
+//#define NUM_LEDS_SIDE 5
+#define NUM_LEDS_SIDE 8
+#define NUM_LEDS      (NUM_LEDS_SIDE * NUM_LEDS_SIDE)
 
 #define LED_TYPE    PL9823
 //#define LED_TYPE    WS2812B
@@ -502,8 +503,34 @@ void drawLetter(char c) {
   uint32_t singleBit = 1;
 
   // FIXME: Use font size instead of magic 5*5
-  for ( uint8_t i = 0; i < 25; i++) {
-    leds[i] = CHSV(gHue, 255, letterA & singleBit ? 255 : 0);
+
+  int8_t offset = 0;
+  int8_t invert = 0;
+  for (int8_t i = 0; i < 25; i++) {
+    invert = 0;
+    if (NUM_LEDS_SIDE > 5) {
+        if (i % 5 == 0) {
+            int8_t skip = (NUM_LEDS_SIDE - 5);
+            for (int8_t j = 0; j < skip; j += 1) {
+                leds[i + offset + j] = CHSV(HUE_BLUE, 255, 100);
+            }
+            offset += skip;
+        }
+        if (i % 10 == 5) {
+            invert = 4;
+        }
+        if (i % 10 == 6) {
+            invert = 2;
+        }
+        if (i % 10 == 8) {
+            invert = -2;
+        }
+        if (i % 10 == 9) {
+            invert = -4;
+        }
+    }
+    leds[i + offset + invert] = CHSV(gHue, 255, letterA & singleBit ? 255 : 0);
     singleBit <<= 1;
+
   }
 }

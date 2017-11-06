@@ -12,17 +12,22 @@ FASTLED_USING_NAMESPACE
 
 // Configuration
 
-#define BRIGHTNESS          30
-#define FRAMES_PER_SECOND   60 // 125 frames/sec <=> 8 milli/frame
+#define BRIGHTNESS          60
+#define FRAMES_PER_SECOND   125 // 125 frames/sec <=> 8 milli/frame
 
 //#define NUM_LEDS  25
 #define NUM_LEDS  64
 
-#define LED_TYPE    WS2812B
-#define COLOR_ORDER GRB
+#define LED_TYPE    PL9823
+//#define LED_TYPE    WS2812B
+#define COLOR_ORDER RGB
 
-#define MIN_WAIT_SECOND 45  // Broadcast interval
-#define MAX_WAIT_SECOND 90
+// #define MIN_WAIT_SECOND 45  // Broadcast interval
+// #define MAX_WAIT_SECOND 90
+
+#define MIN_WAIT_SECOND 10  // Broadcast interval
+#define MAX_WAIT_SECOND 30
+
 
 // Setup
 

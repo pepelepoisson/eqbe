@@ -16,8 +16,10 @@
 - Ouverture pour le remplacement de la pile: Probablement envisageable avec le design actuel. Maintenant que les couches de bois sont soudées on a en fait 2 morceaux. On pourrait faire pivoter l'un par rapport à l'autre autour de l'une des 4 vis. Il faudrait un système de bille + ressort pour garder le cube en position alignée = fermée le reste du temps. Fils a rallonger et fixer dans le cube? Prise de charge à l'intérieur plutot que donnant sur l'extérieur du cube?
 
 Également:
-- Travailler la mise en veille + réveil par bouton ou interrupt acceléromètre. Un prochain PCB utiliserait une pin du ESP pour l'alimentation de l'acceléromètre (si on ne choisit pas l'accel pour le réveil!).
+- Travailler la mise en veille + réveil par bouton ou interrupt acceléromètre. Un prochain PCB utiliserait une pin du ESP pour l'alimentation de l'acceléromètre (si on ne choisit pas l'accel pour le réveil!). Seb: Une option simple, une reed switch. Un contact fort pourrait fermer le contact, sinon un contact subtil avec un aimant (ex. caché sous une base en bois).
 - Travailler la matrice d'affichage. La diffusion actuelle du eqbe 64 est moyenne. On peut faire des essais d'améliorations mais aussi envisager un petit PCB custom pour utiliser 64 de tes belles LEDs. C'est un bon compromis contraste/diffusion.
+- Dans mes rêves les plus fou, on ajoute la recharge par induction, sur une
+  base en bois taillé sur mesure pour le eqbe.
 
 # Software
 
